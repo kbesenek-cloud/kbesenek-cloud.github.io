@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light dark">
+<title>Konum</title>
+<script>
+/* ==================================================================
+   AYARLAR
+   Adres ya da koordinat değişirse yalnızca burayı düzenleyin.
+   QR kod bu sayfanın adresini gösterdiği için kodu yeniden basmak
+   gerekmez.
+   ================================================================== */
+var KONUM = {
+  adres: "Adnan Menderes, 107. Sk. No:29/B, 45040 Manisa Merkez/Manisa",
+
+  // Pini tam kapıya sabitlemek için koordinat girin, örneğin:
+  //   koordinat: { enlem: 38.612345, boylam: 27.423456 }
+  koordinat: null
+};
+
+/* Harita bağlantılarını kurar ve telefonun türünü belirler. */
+var HARITA = (function () {
+  var k = KONUM.koordinat;
+  var nokta = k ? k.enlem + "," + k.boylam : null;
+  var adres = encodeURIComponent(KONUM.adres);
+  var appleSorgu = nokta ? "ll=" + nokta + "&q=" + adres : "q=" + adres;
+
+  var ua = navigator.userAgent || "";
+  // iPadOS kendini "Macintosh" olarak tanıtır; dokunmatik ekrandan ayırt edilir.
+  var ios = /iPhone|iPad|iPod/.test(ua) ||
+            (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+
+  return {
+    ios: ios,
+    google: "https://www.google.com/maps/search/?api=1&query=" +
+            (nokta ? encodeURIComponent(nokta) : adres),
+    apple: "https://maps.apple.com/?" + appleSorgu,
+    appleUygulama: "maps://?" + appleSorgu
+  };
+})();
+
+/* Android ve diğer cihazlar: sayfa çizilmeden Google Haritalar'a geç. */
+if (!HARITA.ios) {
+  document.documentElement.setAttribute("data-hedef", HARITA.google);
+  window.location.replace(HARITA.google);
+}
+</script>
+<style>
+  :root {
+    --zemin: #f3f4f6; --kart: #ffffff; --metin: #15171c; --soluk: #5b6270;
+    --cizgi: #dcdfe5; --dugme: #15171c; --dugme-metin: #ffffff; --igne: #d93a3a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --zemin: #0e1014; --kart: #181b21; --metin: #eef0f4; --soluk: #a2a9b6;
+      --cizgi: #2a2f39; --dugme: #eef0f4; --dugme-metin: #0e1014; --igne: #ff6b6b;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { min-height: 100%; }
+  body {
+    margin: 0; padding: 20px;
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--zemin); color: var(--metin);
+    font: 17px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  main {
+    width: 100%; max-width: 400px;
+    background: var(--kart); border: 1px solid var(--cizgi); border-radius: 18px;
+    padding: 28px 22px 22px; text-align: center;
+  }
+  .igne { width: 40px; height: 40px; color: var(--igne); }
+  h1 { margin: 8px 0 6px; font-size: 14px; font-weight: 600; letter-spacing: .06em; color: var(--soluk); }
+  .adres { margin: 0 0 22px; font-size: 19px; font-weight: 600; line-height: 1.35; text-wrap: balance; }
+  .dugme {
+    display: block; margin-top: 10px; padding: 14px 16px; border-radius: 12px;
+    font-weight: 600; text-decoration: none;
+  }
+  .birincil { background: var(--dugme); color: var(--dugme-metin); }
+  .ikincil { color: var(--metin); border: 1px solid var(--cizgi); }
+  .dugme:focus-visible { outline: 3px solid var(--igne); outline-offset: 2px; }
+  .not { margin: 18px 0 0; font-size: 14px; color: var(--soluk); }
+</style>
+</head>
+<body>
+<main>
+  <svg class="igne" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12 2a7 7 0 0 0-7 7c0 5.1 6 12.3 6.3 12.6a.95.95 0 0 0 1.4 0C13 21.3 19 14.1 19 9a7 7 0 0 0-7-7zm0 9.6A2.6 2.6 0 1 1 12 6.4a2.6 2.6 0 0 1 0 5.2z"/>
+  </svg>
+  <h1>KONUM</h1>
+  <p class="adres" id="adres"></p>
+  <a class="dugme birincil" id="birincil" href="#" hidden></a>
+  <a class="dugme ikincil" id="ikincil" href="#" hidden></a>
+  <p class="not" id="not" hidden>Harita kendiliğinden açılmadıysa yukarıdaki düğmeye dokunun.</p>
+  <noscript><p class="not">Konumu açmak için tarayıcınızda JavaScript'i etkinleştirin.</p></noscript>
+</main>
+<script>
+(function () {
+  var d = document;
+  var birincil = d.getElementById("birincil");
+  var ikincil = d.getElementById("ikincil");
+
+  d.getElementById("adres").textContent = KONUM.adres;
+
+  if (HARITA.ios) {
+    birincil.href = HARITA.apple;
+    birincil.textContent = "Apple Haritalar'da aç";
+    ikincil.href = HARITA.google;
+    ikincil.textContent = "Google Haritalar'da aç";
+  } else {
+    birincil.href = HARITA.google;
+    birincil.textContent = "Google Haritalar'da aç";
+    ikincil.href = HARITA.apple;
+    ikincil.textContent = "Apple Haritalar'da aç";
+  }
+  birincil.hidden = ikincil.hidden = false;
+  d.getElementById("not").hidden = false;
+
+  /* iPhone ve iPad: Haritalar uygulamasını aç. Açılmazsa düğmeler ekranda kalır. */
+  if (HARITA.ios) {
+    d.documentElement.setAttribute("data-hedef", HARITA.appleUygulama);
+    window.location.href = HARITA.appleUygulama;
+  }
+})();
+</script>
+</body>
+</html>
